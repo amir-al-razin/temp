@@ -7,28 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase/client'
-import { Check, X, User, Mail, GraduationCap, Calendar } from 'lucide-react'
-
-interface Application {
-  id: string
-  user_id: string
-  status: string
-  expertise_tags: string[]
-  achievements: string
-  role_title: string
-  created_at: string
-  profiles: {
-    id: string
-    email: string
-    full_name: string
-    department: string
-    year: number
-    avatar_url?: string
-  }
-}
+import { Check, X, Mail, GraduationCap, Calendar } from 'lucide-react'
+import type { Mentor } from '@/types'
 
 interface ApplicationQueueProps {
-  applications: Application[]
+  applications: Mentor[]
 }
 
 export default function ApplicationQueue({ applications }: ApplicationQueueProps) {
@@ -42,7 +25,11 @@ export default function ApplicationQueue({ applications }: ApplicationQueueProps
     setError(null)
 
     try {
-      const updateData: any = {
+      const updateData: {
+        status: string
+        updated_at: string
+        approved_at?: string
+      } = {
         status: action,
         updated_at: new Date().toISOString()
       }
@@ -60,8 +47,9 @@ export default function ApplicationQueue({ applications }: ApplicationQueueProps
 
       // Refresh the page to show updated data
       router.refresh()
-    } catch (err: any) {
-      setError(err.message || `Failed to ${action} application`)
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || `Failed to ${action} application`)
     } finally {
       setProcessingIds(prev => {
         const newSet = new Set(prev)

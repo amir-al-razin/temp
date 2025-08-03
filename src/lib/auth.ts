@@ -1,21 +1,10 @@
 import { createClient } from './supabase/client'
+import type { Profile } from '@/types'
 
 export interface AuthUser {
   id: string
   email: string
   full_name?: string
-}
-
-export interface Profile {
-  id: string
-  email: string
-  full_name: string | null
-  department: string | null
-  year: number | null
-  avatar_url: string | null
-  bio: string | null
-  created_at: string
-  updated_at: string
 }
 
 // University email validation
@@ -101,7 +90,7 @@ export async function getUserProfile(userId: string): Promise<Profile | null> {
   return data
 }
 
-export async function updateUserProfile(userId: string, updates: Partial<Profile>) {
+export async function updateUserProfile(userId: string, updates: Partial<Profile>): Promise<Profile> {
   const supabase = createClient()
   
   // Get current user to ensure we have the email
@@ -124,5 +113,5 @@ export async function updateUserProfile(userId: string, updates: Partial<Profile
     .single()
 
   if (error) throw error
-  return data
+  return data as Profile
 }

@@ -82,8 +82,9 @@ export default function AuthForm({ mode = 'signin' }: AuthFormProps) {
         router.push('/dashboard')
         router.refresh()
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'An error occurred. Please try again.')
     } finally {
       setIsLoading(false)
     }

@@ -18,11 +18,13 @@ import { ArrowLeft, Clock, MessageCircle, Video, Calendar } from 'lucide-react'
 import SessionScheduler from '@/components/calendar/SessionScheduler'
 import Link from 'next/link'
 
+import type { User, Profile, Mentor, Session } from '@/types'
+
 interface SessionRequestFormProps {
   user: User
   profile: Profile
-  mentor: any
-  existingSessions: any[]
+  mentor: Mentor
+  existingSessions: Session[]
 }
 
 const sessionDurations = [
@@ -117,8 +119,9 @@ export default function SessionRequestForm({
         router.push('/sessions')
       }, 2000)
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to send session request. Please try again.')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Failed to send session request. Please try again.')
     } finally {
       setIsLoading(false)
     }

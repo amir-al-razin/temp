@@ -1,0 +1,413 @@
+{
+  "name": "AI Mentor Search Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-mentor-search",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "webhookId": "ai-mentor-search-webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"step\": \"platform_selection\",\n  \"resumeUrl\": \"{{ $execution.resumeUrl }}\",\n  \"platforms\": [\n    {\n      \"id\": \"linkedin\",\n      \"name\": \"LinkedIn\",\n      \"description\": \"Professional networking profiles\",\n      \"icon\": \"linkedin\"\n    },\n    {\n      \"id\": \"facebook\",\n      \"name\": \"Facebook\", \n      \"description\": \"Social media profiles\",\n      \"icon\": \"facebook\"\n    },\n    {\n      \"id\": \"scholar\",\n      \"name\": \"Google Scholar\",\n      \"description\": \"Academic profiles and publications\",\n      \"icon\": \"graduation-cap\"\n    }\n  ],\n  \"processedQuery\": \"{{ $json.query }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        400,
+        0
+      ],
+      "id": "initial-response",
+      "name": "Initial Response"
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        600,
+        0
+      ],
+      "id": "wait-platform-selection",
+      "name": "Wait for Platform Selection",
+      "webhookId": "platform-selection-wait"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash-exp",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash-exp"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are an AI assistant helping students find mentors. Based on the user's query, extract key information and generate search terms.\n\nUser Query: {{ $json.query }}\n\nExtract and return a JSON object with:\n1. keywords: Array of relevant keywords for searching\n2. skills: Array of technical skills mentioned\n3. domain: The field/domain of expertise\n4. level: Experience level needed (beginner, intermediate, advanced)\n5. searchTerms: Optimized search terms for web search\n\nExample output:\n{\n  \"keywords\": [\"machine learning\", \"python\", \"data science\"],\n  \"skills\": [\"python\", \"tensorflow\", \"data analysis\"],\n  \"domain\": \"artificial intelligence\",\n  \"level\": \"intermediate\",\n  \"searchTerms\": \"machine learning engineer python tensorflow IUT\"\n}",
+              "role": "model"
+            },
+            {
+              "content": "{{ $json.query }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        800,
+        0
+      ],
+      "id": "ai-query-processor",
+      "name": "AI Query Processor",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "google-gemini-credentials",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the AI response\nconst aiResponse = $input.first().json.content.parts[0].text;\nlet parsedQuery;\n\ntry {\n  parsedQuery = JSON.parse(aiResponse);\n} catch (error) {\n  // Fallback if JSON parsing fails\n  parsedQuery = {\n    keywords: [$json.query.split(' ').slice(0, 3)],\n    skills: [],\n    domain: 'general',\n    level: 'any',\n    searchTerms: $json.query + ' IUT'\n  };\n}\n\n// Get selected platforms from the wait node input\nconst selectedPlatforms = $json.platforms || ['linkedin', 'facebook', 'scholar'];\nconst originalQuery = $json.query;\n\nreturn {\n  json: {\n    originalQuery,\n    selectedPlatforms,\n    ...parsedQuery\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "id": "process-query-data",
+      "name": "Process Query Data"
+    },
+    {
+      "parameters": {
+        "url": "={{ $vars.SUPABASE_URL }}/rest/v1/mentors",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "select",
+              "value": "id,user_id,expertise_tags,role_title,availability_status,profiles(id,full_name,department,year,bio,avatar_url)"
+            },
+            {
+              "name": "status",
+              "value": "eq.approved"
+            },
+            {
+              "name": "availability_status",
+              "value": "neq.offline"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $vars.SUPABASE_ANON_KEY }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $vars.SUPABASE_ANON_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        -100
+      ],
+      "id": "fetch-internal-mentors",
+      "name": "Fetch Internal Mentors"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the processed query data\nconst queryData = $input.first().json;\nconst mentors = $input.last().json;\n\n// Function to calculate relevance score\nfunction calculateRelevance(mentor, queryData) {\n  let score = 0;\n  const profile = mentor.profiles;\n  \n  // Check expertise tags\n  if (mentor.expertise_tags) {\n    queryData.keywords.forEach(keyword => {\n      mentor.expertise_tags.forEach(tag => {\n        if (tag.toLowerCase().includes(keyword.toLowerCase())) {\n          score += 3;\n        }\n      });\n    });\n  }\n  \n  // Check bio content\n  if (profile.bio) {\n    queryData.keywords.forEach(keyword => {\n      if (profile.bio.toLowerCase().includes(keyword.toLowerCase())) {\n        score += 2;\n      }\n    });\n  }\n  \n  // Check role title\n  if (mentor.role_title) {\n    queryData.keywords.forEach(keyword => {\n      if (mentor.role_title.toLowerCase().includes(keyword.toLowerCase())) {\n        score += 2;\n      }\n    });\n  }\n  \n  // Boost for available mentors\n  if (mentor.availability_status === 'available') {\n    score += 1;\n  }\n  \n  return score;\n}\n\n// Process and score mentors\nconst scoredMentors = mentors.map(mentor => ({\n  ...mentor,\n  relevance_score: calculateRelevance(mentor, queryData)\n}));\n\n// Sort by relevance score and take top 10\nconst topMentors = scoredMentors\n  .sort((a, b) => b.relevance_score - a.relevance_score)\n  .slice(0, 10);\n\nreturn {\n  json: {\n    internal_mentors: topMentors,\n    query_data: queryData\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        -100
+      ],
+      "id": "process-internal-mentors",
+      "name": "Process Internal Mentors"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get query data and selected platforms\nconst queryData = $input.first().json;\nconst selectedPlatforms = queryData.selectedPlatforms;\n\n// Platform search templates\nconst platformTemplates = {\n  linkedin: 'site:linkedin.com/in {searchTerms} \"Islamic University of Technology\"',\n  facebook: 'site:facebook.com {searchTerms} IUT Gazipur Bangladesh',\n  scholar: 'site:scholar.google.com {searchTerms} \"Islamic University of Technology\"'\n};\n\n// Generate search queries for selected platforms\nconst searchQueries = selectedPlatforms.map(platform => {\n  const template = platformTemplates[platform];\n  if (template) {\n    return {\n      platform,\n      query: template.replace('{searchTerms}', queryData.searchTerms)\n    };\n  }\n  return null;\n}).filter(Boolean);\n\nreturn searchQueries.map(sq => ({ json: sq }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        100
+      ],
+      "id": "generate-search-queries",
+      "name": "Generate Search Queries"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/customsearch/v1",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $vars.GOOGLE_SEARCH_API_KEY }}"
+            },
+            {
+              "name": "cx",
+              "value": "={{ $vars.GOOGLE_SEARCH_ENGINE_ID }}"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "num",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1400,
+        100
+      ],
+      "id": "external-search",
+      "name": "External Search"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process external search results\nconst searchResults = $input.all();\nconst externalProfiles = [];\n\nsearchResults.forEach(result => {\n  const platform = result.json.platform;\n  const searchData = result.json;\n  \n  if (searchData.items) {\n    searchData.items.forEach(item => {\n      const titleParts = item.title.split(' - ');\n      const profile = {\n        name: titleParts[0] || null,\n        title: titleParts.slice(1).join(' - ') || null,\n        link: item.link || null,\n        snippet: item.snippet || null,\n        image: item.pagemap?.cse_thumbnail?.[0]?.src || null,\n        platform: platform,\n        relevance_score: Math.random() * 5 // Simple random scoring for now\n      };\n      externalProfiles.push(profile);\n    });\n  }\n});\n\n// Sort by relevance and limit results\nconst topExternalProfiles = externalProfiles\n  .sort((a, b) => b.relevance_score - a.relevance_score)\n  .slice(0, 15);\n\nreturn {\n  json: {\n    external_profiles: topExternalProfiles\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        100
+      ],
+      "id": "process-external-results",
+      "name": "Process External Results"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1800,
+        0
+      ],
+      "id": "merge-results",
+      "name": "Merge Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine internal and external results\nconst internalData = $input.first().json;\nconst externalData = $input.last().json;\n\nconst finalResults = {\n  success: true,\n  data: {\n    internal: internalData.internal_mentors || [],\n    external: externalData.external_profiles || [],\n    query: internalData.query_data.originalQuery,\n    searchTime: Date.now()\n  },\n  stats: {\n    internal_count: internalData.internal_mentors?.length || 0,\n    external_count: externalData.external_profiles?.length || 0,\n    total_count: (internalData.internal_mentors?.length || 0) + (externalData.external_profiles?.length || 0)\n  }\n};\n\nreturn { json: finalResults };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        0
+      ],
+      "id": "format-final-results",
+      "name": "Format Final Results"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2200,
+        0
+      ],
+      "id": "final-response",
+      "name": "Final Response"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Initial Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initial Response": {
+      "main": [
+        [
+          {
+            "node": "Wait for Platform Selection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Platform Selection": {
+      "main": [
+        [
+          {
+            "node": "AI Query Processor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Query Processor": {
+      "main": [
+        [
+          {
+            "node": "Process Query Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Query Data": {
+      "main": [
+        [
+          {
+            "node": "Fetch Internal Mentors",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Generate Search Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Internal Mentors": {
+      "main": [
+        [
+          {
+            "node": "Process Internal Mentors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Internal Mentors": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Search Queries": {
+      "main": [
+        [
+          {
+            "node": "External Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "External Search": {
+      "main": [
+        [
+          {
+            "node": "Process External Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process External Results": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Format Final Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Final Results": {
+      "main": [
+        [
+          {
+            "node": "Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "ai-mentor-search-workflow"
+  },
+  "tags": [
+    "ai",
+    "mentor",
+    "search",
+    "iut"
+  ],
+  "active": false
+}

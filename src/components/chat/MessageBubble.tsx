@@ -1,11 +1,11 @@
 'use client'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { User } from '@supabase/supabase-js'
 import { formatDistanceToNow } from 'date-fns'
+import type { Message, User } from '@/types'
 
 interface MessageBubbleProps {
-  message: any
+  message: Message
   isOwn: boolean
   currentUser: User
 }

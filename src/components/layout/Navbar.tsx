@@ -13,31 +13,45 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from '@/components/ui/navigation-menu'
 import { 
   Sun, 
   Moon, 
-  User, 
+  User as UserIcon, 
   Settings, 
   LogOut, 
-  Home,
   Users,
   MessageCircle,
   Calendar,
   GraduationCap,
-  BarChart3
+  BarChart3,
+  Activity,
+  FileText,
+  Shield,
+  Sparkles
 } from 'lucide-react'
 import { signOut, getCurrentUser, getUserProfile } from '@/lib/auth'
-import { isAdmin } from '@/lib/auth-server'
 import NotificationBell from './NotificationBell'
+import { StarBorder } from '@/components/ui/start-border'
+import { User, Profile } from '@/types'
 import Link from 'next/link'
+import { cn } from '@/lib/utils'
 
 interface NavbarProps {
   currentPath?: string
 }
 
 export default function Navbar({ currentPath }: NavbarProps) {
-  const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [isUserAdmin, setIsUserAdmin] = useState(false)
   const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
@@ -93,19 +107,60 @@ export default function Navbar({ currentPath }: NavbarProps) {
     return null // Prevent hydration mismatch
   }
 
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Mentors', href: '/mentors/explore', icon: Users },
-    { name: 'Sessions', href: '/sessions', icon: MessageCircle },
-    { name: 'Calendar', href: '/calendar', icon: Calendar },
-    { name: 'Chat History', href: '/chat/history', icon: MessageCircle },
-    { name: 'Apply as Mentor', href: '/mentors/apply', icon: GraduationCap },
+  // Activities dropdown items
+  const activitiesItems = [
+    {
+      title: 'Sessions',
+      href: '/sessions',
+      description: 'View and manage your mentorship sessions',
+      icon: MessageCircle
+    },
+    {
+      title: 'Chat History',
+      href: '/chat/history',
+      description: 'Access your past conversations',
+      icon: FileText
+    }
   ]
 
-  const adminNavigation = [
-    { name: 'Admin Dashboard', href: '/admin/dashboard', icon: BarChart3 },
-    { name: 'Applications', href: '/admin/applications', icon: Users },
-    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+
+
+  // Mentorship dropdown items
+  const mentorshipItems = [
+    {
+      title: 'Calendar',
+      href: '/calendar',
+      description: 'Schedule and manage your mentorship sessions',
+      icon: Calendar
+    },
+    {
+      title: 'Apply as Mentor',
+      href: '/mentors/apply',
+      description: 'Share your knowledge with other students',
+      icon: GraduationCap
+    }
+  ]
+
+  // Admin dropdown items
+  const adminItems = [
+    {
+      title: 'Admin Dashboard',
+      href: '/admin/dashboard',
+      description: 'Platform overview and statistics',
+      icon: BarChart3
+    },
+    {
+      title: 'Applications',
+      href: '/admin/applications',
+      description: 'Review mentor applications',
+      icon: Users
+    },
+    {
+      title: 'Analytics',
+      href: '/admin/analytics',
+      description: 'Detailed platform analytics',
+      icon: Activity
+    }
   ]
 
   return (
@@ -114,59 +169,103 @@ export default function Navbar({ currentPath }: NavbarProps) {
         <div className="flex justify-between h-16">
           {/* Logo and Navigation */}
           <div className="flex items-center">
-            <Link href="/dashboard" className="flex items-center space-x-2">
+            <Link href="/dashboard" className="flex items-center space-x-2 mr-8">
               <div className="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-lg font-bold text-sm">
                 E
               </div>
               <span className="font-bold text-xl text-foreground">Eagles</span>
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-1 ml-8">
-              {navigation.map((item) => {
-                const Icon = item.icon
-                const isActive = currentPath === item.href
-                return (
-                  <Link key={item.name} href={item.href}>
-                    <Button
-                      variant={isActive ? "default" : "ghost"}
-                      size="sm"
-                      className="flex items-center space-x-2"
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="hidden lg:inline">{item.name}</span>
-                    </Button>
-                  </Link>
-                )
-              })}
+            {/* Desktop Navigation Menu */}
+            <div className="hidden md:flex">
+              <NavigationMenu viewport={false}>
+                <NavigationMenuList>
+                  {/* Activities Dropdown */}
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger>Activities</NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <ul className="grid w-[400px] gap-3 p-1">
+                        {activitiesItems.map((item) => (
+                          <ListItem
+                            key={item.title}
+                            title={item.title}
+                            href={item.href}
+                            icon={item.icon}
+                          >
+                            {item.description}
+                          </ListItem>
+                        ))}
+                      </ul>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
 
-              {/* Admin Navigation */}
-              {isUserAdmin && (
-                <>
-                  <div className="h-4 w-px bg-border mx-2" />
-                  {adminNavigation.map((item) => {
-                    const Icon = item.icon
-                    const isActive = currentPath === item.href
-                    return (
-                      <Link key={item.name} href={item.href}>
-                        <Button
-                          variant={isActive ? "default" : "ghost"}
-                          size="sm"
-                          className="flex items-center space-x-2 text-orange-600 hover:text-orange-700"
-                        >
-                          <Icon className="h-4 w-4" />
-                          <span className="hidden lg:inline">{item.name}</span>
-                        </Button>
-                      </Link>
-                    )
-                  })}
-                </>
-              )}
+                  {/* Mentors */}
+                  <NavigationMenuItem>
+                    <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                      <Link href="/mentors/explore">Mentors</Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+
+                  {/* Mentorship Dropdown */}
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger>Mentorship</NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <ul className="grid w-[400px] gap-3 p-1">
+                        {mentorshipItems.map((item) => (
+                          <ListItem
+                            key={item.title}
+                            title={item.title}
+                            href={item.href}
+                            icon={item.icon}
+                          >
+                            {item.description}
+                          </ListItem>
+                        ))}
+                      </ul>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+
+                  {/* Admin Dropdown - Only visible to admins */}
+                  {isUserAdmin && (
+                    <NavigationMenuItem>
+                      <NavigationMenuTrigger className="text-orange-600 hover:text-orange-700">
+                        <Shield className="h-4 w-4 mr-2" />
+                        Admin
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <ul className="grid w-[400px] gap-3 p-1">
+                          {adminItems.map((item) => (
+                            <ListItem
+                              key={item.title}
+                              title={item.title}
+                              href={item.href}
+                              icon={item.icon}
+                              className="text-orange-600 hover:text-orange-700"
+                            >
+                              {item.description}
+                            </ListItem>
+                          ))}
+                        </ul>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  )}
+                </NavigationMenuList>
+              </NavigationMenu>
             </div>
           </div>
 
-          {/* Right side - Notifications, Theme toggle and Profile */}
+          {/* Right side - AI Search, Notifications, Theme toggle and Profile */}
           <div className="flex items-center space-x-4">
+            {/* AI Search Button */}
+            {user && (
+              <StarBorder as={Link} href="/mentors/search" className="no-underline">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="hidden sm:inline">Search with AI</span>
+                </div>
+              </StarBorder>
+            )}
+
             {/* Notifications */}
             {user && <NotificationBell userId={user.id} />}
 
@@ -193,12 +292,12 @@ export default function Navbar({ currentPath }: NavbarProps) {
                     <Avatar className="h-9 w-9">
                       <AvatarImage 
                         src={profile?.avatar_url || undefined} 
-                        alt={profile?.full_name || user.email} 
+                        alt={profile?.full_name || user.email || 'User'} 
                       />
                       <AvatarFallback>
                         {profile?.full_name 
                           ? getInitials(profile.full_name)
-                          : user.email?.[0]?.toUpperCase() || 'U'
+                          : (user.email?.[0]?.toUpperCase() || 'U')
                         }
                       </AvatarFallback>
                     </Avatar>
@@ -211,7 +310,7 @@ export default function Navbar({ currentPath }: NavbarProps) {
                         {profile?.full_name || 'User'}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
+                        {user.email || 'No email'}
                       </p>
                       {isUserAdmin && (
                         <p className="text-xs leading-none text-orange-600 font-medium">
@@ -224,7 +323,7 @@ export default function Navbar({ currentPath }: NavbarProps) {
                   
                   <DropdownMenuItem asChild>
                     <Link href="/profile" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" />
+                      <UserIcon className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </Link>
                   </DropdownMenuItem>
@@ -246,32 +345,58 @@ export default function Navbar({ currentPath }: NavbarProps) {
                   {/* Mobile Navigation Items */}
                   <div className="md:hidden">
                     <DropdownMenuSeparator />
-                    {navigation.map((item) => {
-                      const Icon = item.icon
-                      return (
-                        <DropdownMenuItem key={item.name} asChild>
-                          <Link href={item.href} className="flex items-center">
-                            <Icon className="mr-2 h-4 w-4" />
-                            <span>{item.name}</span>
-                          </Link>
-                        </DropdownMenuItem>
-                      )
-                    })}
+                    <DropdownMenuItem asChild>
+                      <Link href="/sessions" className="flex items-center">
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        <span>Sessions</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/chat/history" className="flex items-center">
+                        <FileText className="mr-2 h-4 w-4" />
+                        <span>Chat History</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/mentors/explore" className="flex items-center">
+                        <Users className="mr-2 h-4 w-4" />
+                        <span>Mentors</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/calendar" className="flex items-center">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        <span>Calendar</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/mentors/apply" className="flex items-center">
+                        <GraduationCap className="mr-2 h-4 w-4" />
+                        <span>Apply as Mentor</span>
+                      </Link>
+                    </DropdownMenuItem>
 
                     {isUserAdmin && (
                       <>
                         <DropdownMenuSeparator />
-                        {adminNavigation.map((item) => {
-                          const Icon = item.icon
-                          return (
-                            <DropdownMenuItem key={item.name} asChild>
-                              <Link href={item.href} className="flex items-center text-orange-600">
-                                <Icon className="mr-2 h-4 w-4" />
-                                <span>{item.name}</span>
-                              </Link>
-                            </DropdownMenuItem>
-                          )
-                        })}
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/dashboard" className="flex items-center text-orange-600">
+                            <BarChart3 className="mr-2 h-4 w-4" />
+                            <span>Admin Dashboard</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/applications" className="flex items-center text-orange-600">
+                            <Users className="mr-2 h-4 w-4" />
+                            <span>Applications</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/analytics" className="flex items-center text-orange-600">
+                            <Activity className="mr-2 h-4 w-4" />
+                            <span>Analytics</span>
+                          </Link>
+                        </DropdownMenuItem>
                       </>
                     )}
                   </div>
@@ -288,5 +413,42 @@ export default function Navbar({ currentPath }: NavbarProps) {
         </div>
       </div>
     </nav>
+  )
+}
+
+// Helper component for navigation menu items
+function ListItem({
+  title,
+  children,
+  href,
+  icon: Icon,
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"li"> & { 
+  href: string
+  icon?: React.ComponentType<{ className?: string }>
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <li {...props}>
+      <NavigationMenuLink asChild>
+        <Link 
+          href={href}
+          className={cn(
+            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            className
+          )}
+        >
+          <div className="flex items-center space-x-2">
+            {Icon && <Icon className="h-4 w-4" />}
+            <div className="text-sm font-medium leading-none">{title}</div>
+          </div>
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+            {children}
+          </p>
+        </Link>
+      </NavigationMenuLink>
+    </li>
   )
 }

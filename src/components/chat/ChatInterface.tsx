@@ -9,15 +9,15 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase/client'
 import { notificationService } from '@/lib/notifications'
-import { User } from '@supabase/supabase-js'
-import { ArrowLeft, Send, Video, Phone, MoreVertical, Clock, Paperclip } from 'lucide-react'
+import { ArrowLeft, Send, Video, Clock, Paperclip } from 'lucide-react'
 import Link from 'next/link'
 import MessageBubble from './MessageBubble'
+import type { Session, Message, User, ApiError } from '@/types'
 
 interface ChatInterfaceProps {
-  session: any
+  session: Session
   currentUser: User
-  initialMessages: any[]
+  initialMessages: Message[]
 }
 
 export default function ChatInterface({
@@ -139,10 +139,10 @@ export default function ChatInterface({
         })
 
       // Clean up Jitsi tracking if component unmounts
-      const cleanup = (window as any)[`jitsi-cleanup-${session.id}`]
+      const cleanup = (window as Record<string, unknown>)[`jitsi-cleanup-${session.id}`] as (() => void) | undefined
       if (cleanup) {
         cleanup()
-        delete (window as any)[`jitsi-cleanup-${session.id}`]
+        delete (window as Record<string, unknown>)[`jitsi-cleanup-${session.id}`]
       }
 
       // Remove user from call tracking
@@ -229,11 +229,12 @@ export default function ChatInterface({
         // Don't fail the message sending if notification fails
       }
 
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as Error
       // Remove failed message and show error
       setMessages(prev => prev.filter(msg => msg.id !== tempId))
       setNewMessage(messageContent) // Restore message content
-      setError(err.message || 'Failed to send message')
+      setError(error.message || 'Failed to send message')
     } finally {
       setIsLoading(false)
     }
@@ -294,8 +295,9 @@ export default function ChatInterface({
           .eq('id', session.id)
       }
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to upload file')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Failed to upload file')
     } finally {
       setIsUploading(false)
       // Reset file input
@@ -412,15 +414,16 @@ export default function ChatInterface({
         window.addEventListener('storage', handleStorageChange)
 
           // Store cleanup function reference
-          ; (window as any)[`jitsi-cleanup-${session.id}`] = () => {
+          ; (window as Record<string, unknown>)[`jitsi-cleanup-${session.id}`] = () => {
             clearInterval(checkClosed)
             window.removeEventListener('storage', handleStorageChange)
             localStorage.removeItem(`jitsi-monitor-${session.id}`)
           }
       }
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to start video call')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Failed to start video call')
     }
   }
 
@@ -431,7 +434,7 @@ export default function ChatInterface({
 
       // Check if all users have left after a short delay
       setTimeout(checkIfAllUsersLeft, 1000)
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error handling user left call:', err)
     }
   }
@@ -449,7 +452,7 @@ export default function ChatInterface({
       if (!mentorInCall && !studentInCall) {
         await handleEndVideoCall()
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error checking if all users left:', err)
     }
   }
@@ -507,8 +510,9 @@ export default function ChatInterface({
 
       if (error) throw error
 
-    } catch (err: any) {
-      setError(err.message || 'Failed to end video call')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Failed to end video call')
     }
   }
 
@@ -565,8 +569,9 @@ export default function ChatInterface({
       if (error) throw error
 
       router.push('/sessions')
-    } catch (err: any) {
-      setError(err.message || 'Failed to complete session')
+    } catch (err) {
+      const error = err as Error
+      setError(error.message || 'Failed to complete session')
     }
   }
 
