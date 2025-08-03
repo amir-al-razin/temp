@@ -192,14 +192,14 @@ function InternalMentorCard({ mentor, index }: { mentor: Mentor; index: number }
         </Button>
       </div>
 
-      {mentor.relevance_score !== undefined && mentor.relevance_score > 0 && (
+      {/* {mentor.relevance_score !== undefined && mentor.relevance_score > 0 && (
         <div className="flex items-center gap-1 mt-3 pt-3 border-t">
           <Star className="h-3 w-3 text-yellow-500" />
           <span className="text-xs text-muted-foreground">
             Relevance: {Math.min(5, Math.max(1, Math.round(mentor.relevance_score)))}/5
           </span>
         </div>
-      )}
+      )} */}
     </motion.div>
   )
 }
