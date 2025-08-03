@@ -171,7 +171,7 @@ export default function MentorSearchPage() {
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold mb-2">Find Your Perfect Mentor</h2>
                 <p className="text-muted-foreground">
-                  Describe what you're looking for and we'll help you find mentors from IUT and beyond
+                  Describe what you&apos;re looking for and we&apos;ll help you find mentors from IUT and beyond
                 </p>
               </div>
               
@@ -231,7 +231,7 @@ export default function MentorSearchPage() {
               <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
               <h3 className="text-lg font-semibold mb-2">Searching for mentors...</h3>
               <p className="text-muted-foreground">
-                We're looking through our platform and the web to find the best matches for you
+                We&apos;re looking through our platform and the web to find the best matches for you
               </p>
             </motion.div>
           )}
@@ -282,7 +282,7 @@ function PlatformSelector({
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold mb-2">Choose Search Platforms</h2>
         <p className="text-muted-foreground mb-4">
-          Select which platforms to search for mentors related to: "{query}"
+          Select which platforms to search for mentors related to: &quot;{query}&quot;
         </p>
       </div>
 

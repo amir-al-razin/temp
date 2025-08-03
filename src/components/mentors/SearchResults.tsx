@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { SearchResults as SearchResultsType, Mentor, ExternalProfile } from '@/types'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface SearchResultsProps {
   results: SearchResultsType
@@ -23,7 +24,7 @@ export default function SearchResults({ results, query, onStartOver }: SearchRes
         <div>
           <h2 className="text-2xl font-bold">Search Results</h2>
           <p className="text-muted-foreground">
-            Found {totalResults} mentors for "{query}"
+            Found {totalResults} mentors for &quot;{query}&quot;
           </p>
         </div>
         <Button variant="outline" onClick={onStartOver}>
@@ -232,9 +233,11 @@ function ExternalProfileCard({ profile, index }: { profile: ExternalProfile; ind
       <div className="flex items-start gap-4 mb-4">
         <div className="relative">
           {profile.image ? (
-            <img
+            <Image
               src={profile.image}
               alt={profile.name || 'Profile'}
+              width={48}
+              height={48}
               className="h-12 w-12 rounded-full object-cover"
             />
           ) : (

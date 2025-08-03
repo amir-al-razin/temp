@@ -55,7 +55,7 @@ export default function MentorSearchChat({ onSendMessage, isLoading }: MentorSea
               adjustHeight()
             }}
             onKeyDown={handleKeyDown}
-            placeholder="I'm looking for a mentor who can help me with machine learning and Python programming..."
+            placeholder="I&apos;m looking for a mentor who can help me with machine learning and Python programming..."
             className={cn(
               'w-full px-4 py-3 resize-none bg-transparent border-none',
               'text-foreground text-sm focus:outline-none',
@@ -95,7 +95,7 @@ export default function MentorSearchChat({ onSendMessage, isLoading }: MentorSea
 
       <div className="mt-6 text-center">
         <p className="text-sm text-muted-foreground">
-          Try: "I need help with web development using React and Node.js" or "Looking for a senior software engineer mentor"
+          Try: &quot;I need help with web development using React and Node.js&quot; or &quot;Looking for a senior software engineer mentor&quot;
         </p>
       </div>
     </div>
