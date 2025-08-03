@@ -208,6 +208,47 @@ export interface AISearchResponse {
   error?: string
 }
 
+// AI Search types
+export interface SearchPlatform {
+  id: string
+  name: string
+  description: string
+  icon: string
+}
+
+export interface SearchResult {
+  id: string
+  name: string
+  title: string
+  platform: string
+  profileUrl: string
+  imageUrl?: string
+  description: string
+  relevanceScore: number
+  expertise: string[]
+  location?: string
+  company?: string
+  university?: string
+}
+
+export interface AISearchResponse {
+  success: boolean
+  step: 'platform_selection' | 'search' | 'results'
+  data?: SearchResult[]
+  resumeUrl?: string
+  error?: string
+}
+
+export interface SearchState {
+  query: string
+  isSearching: boolean
+  platforms: string[]
+  results: SearchResult[] | null
+  error: string | null
+  resumeUrl: string | null
+  step: 'input' | 'platform_selection' | 'searching' | 'results'
+}
+
 // Utility types
 export type SessionStatus = Session['status']
 export type MessageType = Message['message_type']

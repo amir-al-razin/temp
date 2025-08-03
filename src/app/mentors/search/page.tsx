@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import MentorSearchChat from '@/components/mentors/MentorSearchChat'
@@ -186,7 +186,18 @@ export default function MentorSearchPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="mt-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg"
                 >
-                  <p className="text-destructive text-sm">{searchState.error}</p>
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-destructive text-sm font-medium mb-1">Search Error</p>
+                      <p className="text-destructive text-sm">{searchState.error}</p>
+                      {searchState.error.includes('connect') && (
+                        <p className="text-destructive text-xs mt-2 opacity-80">
+                          Make sure the AI search service is running on port 5678
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </motion.div>
               )}
             </motion.div>
@@ -213,7 +224,18 @@ export default function MentorSearchPage() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="mt-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg"
                 >
-                  <p className="text-destructive text-sm">{searchState.error}</p>
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-destructive text-sm font-medium mb-1">Platform Selection Error</p>
+                      <p className="text-destructive text-sm">{searchState.error}</p>
+                      {searchState.error.includes('connect') && (
+                        <p className="text-destructive text-xs mt-2 opacity-80">
+                          Make sure the AI search service is running on port 5678
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </motion.div>
               )}
             </motion.div>

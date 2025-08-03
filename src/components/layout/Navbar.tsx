@@ -44,6 +44,7 @@ import { StarBorder } from '@/components/ui/start-border'
 import { User, Profile } from '@/types'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { RainbowButton } from '../magicui/rainbow-button'
 
 interface NavbarProps {
   currentPath?: string
@@ -257,14 +258,16 @@ export default function Navbar({ currentPath }: NavbarProps) {
           {/* Right side - AI Search, Notifications, Theme toggle and Profile */}
           <div className="flex items-center space-x-4">
             {/* AI Search Button */}
-            {user && (
-              <StarBorder as={Link} href="/mentors/search" className="no-underline">
+            {/* {user && (
+              <RainbowButton  
+              // href="/mentors/search" 
+               className="no-underline">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
                   <span className="hidden sm:inline">Search with AI</span>
                 </div>
-              </StarBorder>
-            )}
+              </RainbowButton>
+            )} */}
 
             {/* Notifications */}
             {user && <NotificationBell userId={user.id} />}
