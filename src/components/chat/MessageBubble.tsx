@@ -40,8 +40,7 @@ export default function MessageBubble({ message, isOwn, currentUser }: MessageBu
             <div className="text-sm">
               <p className="font-medium text-gray-900 dark:text-gray-100">{message.content}</p>
               
-              {/* Video Call Start */}
-              {message.metadata?.type === 'video_call' && message.metadata?.jitsi_link && (
+              {(message.metadata as any)?.type === 'video_call' && (message.metadata as any)?.jitsi_link && (
                 <div className="mt-3">
                   {(() => {
                     // Determine if current user is mentor or student
@@ -65,7 +64,7 @@ export default function MessageBubble({ message, isOwn, currentUser }: MessageBu
                     
                     return (
                       <a 
-                        href={joinLink} 
+                        href={joinLink as string} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className={`inline-flex items-center space-x-2 px-4 py-2 ${buttonStyle} text-white rounded-md text-sm font-medium transition-colors`}
@@ -97,9 +96,9 @@ export default function MessageBubble({ message, isOwn, currentUser }: MessageBu
                       <span className="font-semibold">Video Call Ended</span>
                     </div>
                     
-                    {message.metadata.call_duration && (
+                    {(message.metadata as any).call_duration && (
                       <div className="text-sm text-red-700 dark:text-red-300">
-                        <span>Duration: {message.metadata.call_duration}</span>
+                        <span>Duration: {(message.metadata as any).call_duration}</span>
                       </div>
                     )}
                   </div>
@@ -117,7 +116,7 @@ export default function MessageBubble({ message, isOwn, currentUser }: MessageBu
                       <span className="font-semibold">Session Summary</span>
                     </div>
                     
-                    {message.metadata.session_summary && (
+                    {(message.metadata as any).session_summary && (
                       <div className="space-y-2 text-sm text-green-700 dark:text-green-300">
                         <div className="flex justify-between items-center">
                           <span>Duration:</span>

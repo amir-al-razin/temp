@@ -107,10 +107,10 @@ export default function ApplicationQueue({ applications }: ApplicationQueueProps
                   <Avatar className="h-12 w-12">
                     <AvatarImage 
                       src={application.profiles.avatar_url || undefined} 
-                      alt={application.profiles.full_name} 
+                      alt={application.profiles.full_name || 'User'} 
                     />
                     <AvatarFallback>
-                      {getInitials(application.profiles.full_name)}
+                      {getInitials(application.profiles.full_name || 'User')}
                     </AvatarFallback>
                   </Avatar>
                   <div>

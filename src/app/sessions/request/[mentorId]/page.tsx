@@ -5,12 +5,13 @@ import { createClient } from '@/lib/supabase/server'
 import SessionRequestForm from '@/components/sessions/SessionRequestForm'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     mentorId: string
-  }
+  }>
 }
 
 export default async function SessionRequestPage({ params }: PageProps) {
+  const { mentorId } = await params
   const user = await getServerUser()
   
   if (!user) {
@@ -40,7 +41,7 @@ export default async function SessionRequestPage({ params }: PageProps) {
         bio
       )
     `)
-    .eq('user_id', params.mentorId)
+    .eq('user_id', mentorId)
     .eq('status', 'approved')
     .single()
 

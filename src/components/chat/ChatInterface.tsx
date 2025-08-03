@@ -69,10 +69,10 @@ export default function ChatInterface({
             .eq('id', payload.new.sender_id)
             .single()
 
-          const newMessage = {
+          const newMessage: Message = {
             ...payload.new,
             sender: senderData
-          }
+          } as Message
 
           setMessages(prev => [...prev, newMessage])
 
@@ -139,10 +139,10 @@ export default function ChatInterface({
         })
 
       // Clean up Jitsi tracking if component unmounts
-      const cleanup = (window as Record<string, unknown>)[`jitsi-cleanup-${session.id}`] as (() => void) | undefined
+      const cleanup = (window as any)[`jitsi-cleanup-${session.id}`] as (() => void) | undefined
       if (cleanup) {
         cleanup()
-        delete (window as Record<string, unknown>)[`jitsi-cleanup-${session.id}`]
+        delete (window as any)[`jitsi-cleanup-${session.id}`]
       }
 
       // Remove user from call tracking
@@ -159,17 +159,28 @@ export default function ChatInterface({
     const tempId = `temp-${Date.now()}`
 
     // Optimistic update - add message immediately
-    const optimisticMessage = {
+    const optimisticMessage: Message = {
       id: tempId,
       session_id: session.id,
       sender_id: currentUser.id,
       content: messageContent,
       message_type: 'text',
+      file_url: null,
+      file_name: null,
+      file_size: null,
+      metadata: {},
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       sender: {
         id: currentUser.id,
+        email: currentUser.email || '',
         full_name: currentUser.user_metadata?.full_name || 'You',
-        avatar_url: null
+        department: null,
+        year: null,
+        avatar_url: null,
+        bio: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       },
       sending: true
     }
@@ -414,7 +425,7 @@ export default function ChatInterface({
         window.addEventListener('storage', handleStorageChange)
 
           // Store cleanup function reference
-          ; (window as Record<string, unknown>)[`jitsi-cleanup-${session.id}`] = () => {
+          ; (window as any)[`jitsi-cleanup-${session.id}`] = () => {
             clearInterval(checkClosed)
             window.removeEventListener('storage', handleStorageChange)
             localStorage.removeItem(`jitsi-monitor-${session.id}`)
@@ -654,7 +665,7 @@ export default function ChatInterface({
                   variant="outline"
                   size="sm"
                   onClick={handleVideoCall}
-                  disabled={session.status === 'completed'}
+                  disabled={session.status === 'completed' as any}
                   className="hover:bg-muted"
                   title="Start video call (Mentor only)"
                 >

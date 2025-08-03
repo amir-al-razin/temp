@@ -84,9 +84,9 @@ export default async function AdminAnalyticsPage() {
   ])
 
   // Calculate metrics
-  const sessionCompletionRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0
-  const mentorApprovalRate = totalMentors > 0 ? Math.round((activeMentors / totalMentors) * 100) : 0
-  const averageRating = feedbackData?.length > 0 
+  const sessionCompletionRate = (totalSessions && totalSessions > 0 && completedSessions) ? Math.round((completedSessions / totalSessions) * 100) : 0
+  const mentorApprovalRate = (totalMentors && totalMentors > 0 && activeMentors) ? Math.round((activeMentors / totalMentors) * 100) : 0
+  const averageRating = (feedbackData && feedbackData.length > 0)
     ? (feedbackData.reduce((sum: number, f: any) => sum + f.rating, 0) / feedbackData.length).toFixed(1)
     : 'N/A'
 
@@ -208,7 +208,7 @@ export default async function AdminAnalyticsPage() {
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-medium">{activeSessions || 0}</span>
                     <Badge variant="outline">
-                      {totalSessions > 0 ? Math.round((activeSessions / totalSessions) * 100) : 0}%
+                      {(totalSessions && totalSessions > 0 && activeSessions) ? Math.round((activeSessions / totalSessions) * 100) : 0}%
                     </Badge>
                   </div>
                 </div>
@@ -220,7 +220,7 @@ export default async function AdminAnalyticsPage() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-medium">{pendingApplications || 0}</span>
-                    {pendingApplications > 0 && (
+                    {(pendingApplications && pendingApplications > 0) && (
                       <Link href="/admin/applications">
                         <Button size="sm" variant="outline">Review</Button>
                       </Link>

@@ -4,12 +4,13 @@ import { createClient } from '@/lib/supabase/server'
 import FeedbackForm from '@/components/feedback/FeedbackForm'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     sessionId: string
-  }
+  }>
 }
 
 export default async function FeedbackPage({ params }: PageProps) {
+  const { sessionId } = await params
   const user = await getServerUser()
   
   if (!user) {
@@ -34,7 +35,7 @@ export default async function FeedbackPage({ params }: PageProps) {
         avatar_url
       )
     `)
-    .eq('id', params.sessionId)
+    .eq('id', sessionId)
     .single()
 
   if (error || !session) {
@@ -55,7 +56,7 @@ export default async function FeedbackPage({ params }: PageProps) {
   const { data: existingFeedback } = await supabase
     .from('feedback')
     .select('*')
-    .eq('session_id', params.sessionId)
+    .eq('session_id', sessionId)
     .single()
 
   return (

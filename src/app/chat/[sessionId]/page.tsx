@@ -4,12 +4,13 @@ import { createClient } from '@/lib/supabase/server'
 import ChatInterface from '@/components/chat/ChatInterface'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     sessionId: string
-  }
+  }>
 }
 
 export default async function ChatPage({ params }: PageProps) {
+  const { sessionId } = await params
   const user = await getServerUser()
   
   if (!user) {
@@ -34,7 +35,7 @@ export default async function ChatPage({ params }: PageProps) {
         avatar_url
       )
     `)
-    .eq('id', params.sessionId)
+    .eq('id', sessionId)
     .single()
 
   if (error || !session) {
@@ -62,7 +63,7 @@ export default async function ChatPage({ params }: PageProps) {
         avatar_url
       )
     `)
-    .eq('session_id', params.sessionId)
+    .eq('session_id', sessionId)
     .order('created_at', { ascending: true })
 
   return (
